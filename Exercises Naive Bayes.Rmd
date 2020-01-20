@@ -1,0 +1,148 @@
+---
+title: "Discussion-Exercises-Naive-Bayes"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(caTools)
+library(class)
+library(e1071)
+library(naivebayes)
+library(dplyr)
+```
+
+```{r}
+#Function Naive Bayes with library e1071. Return a list with 2 elements, accuracy and actual and predicted values for significance test
+naiveBayesA<-function(train,test){
+  set.seed(123)
+  firstColumn<-colnames(train[1])
+  names(train)[names(train) == firstColumn] <- "actual"
+  names(test)[names(test) == firstColumn] <- "actual"
+  naiveModel<-naiveBayes(actual~.,train)
+  predicted<-predict(naiveModel, test, type="class")
+  validation<-data.frame('actual'=test$actual,predicted)
+  accuracy<-nrow(subset(validation,actual==predicted))/nrow(validation)
+  newList <- list(validation, cat('The accuracy of the model is:',accuracy))
+   return(newList)
+}
+```
+```{r}
+#Function Naive Bayes with library naivebayes. Return a list with 2 elements, accuracy and actual and predicted values for significance test
+naiveBayesB<-function(train,test){
+  firstColumn<-colnames(train[1])
+  names(train)[names(train) == firstColumn] <- "actual"
+  names(test)[names(test) == firstColumn] <- "actual"
+  naiveModel<-naive_bayes(actual~.,train)
+  predicted<-predict(naiveModel, test %>% select(-actual), type="class")
+  validation<-data.frame('actual'=test$actual,predicted)
+  accuracy<-nrow(subset(validation,actual==predicted))/nrow(validation)
+  newList <- list(validation, cat('The accuracy of the model is:',accuracy))
+   return(newList)
+}
+```
+```{r}
+head(iris)
+```
+
+```{r}
+#Ordering columns in dataset
+data<-iris%>%select(Species,Sepal.Length,Sepal.Width,Petal.Length,Petal.Width, starts_with('Species'))
+```
+```{r}
+#Spliting dataset into train and test
+sample<-sample.split(data$Species,SplitRatio=.75)
+irisTrain<-subset(data,sample==TRUE)
+irisTest<-subset(data,sample==FALSE)
+iristTestB<-irisTest %>% select(-Species)
+```
+```{r}
+#Running function naiveBayesA
+accuracyNBAIris<-naiveBayesA(irisTrain,irisTest)
+accuracyNBAIris
+```
+```{r}
+#Running function naiveBayesB
+accuracyNBBIris<-naiveBayesB(irisTrain,irisTest)
+accuracyNBBIris
+```
+```{r}
+#RUnning Chi-Square (No need for this)
+accuracyAIris<-accuracyNBAIris[[1]]
+accuracyBIris<-accuracyNBBIris[[1]]
+accuracyAIris$accuracy<-ifelse(accuracyAIris$actual==accuracyAIris$predicted,"correct","incorrect")
+accuracyBIris$accuracy<-ifelse(accuracyBIris$actual==accuracyBIris$predicted,"correct","incorrect")
+accuracyIris<-data.frame('accuracyA'=accuracyAIris$accuracy,'accuracyB'=accuracyBIris$accuracy)
+SignificanceTest<-chisq.test(accuracyAIris$accuracy,accuracyBIris$accuracy,correct = FALSE)
+SignificanceTest
+```
+```{r}
+mytab
+```
+```{r}
+head(diamonds)
+```
+
+```{r}
+#Ordering columns in dataset and declaring cut as factor
+diamonds$cut<- factor(diamonds$cut, levels=c('Fair','Good','Very Good','Premium','Ideal'), 
+                       ordered=FALSE)
+diamonddf<-diamonds%>%select(cut,carat,color,clarity,depth,table,price,x,y,z)
+head(diamonddf)
+```
+```{r}
+#Spliting dataset into train and test
+set.seed(123)
+sample<-sample.split(diamonddf$cut,SplitRatio=.75)
+diamondsTrain<-subset(diamonddf,sample==TRUE)
+diamondsTest<-subset(diamonddf,sample==FALSE)
+head(diamondsTest)
+```
+
+```{r}
+#Running function naiveBayesA
+accuracyNBADiamonds<-naiveBayesA(diamondsTrain,diamondsTest)
+accuracyNBADiamonds
+```
+
+```{r}
+#Running function naiveBayesB
+accuracyNBBDiamonds<-naiveBayesB(diamondsTrain,diamondsTest)
+accuracyNBBDiamonds
+```
+```{r}
+view(mtcars)
+```
+
+
+```{r}
+#Ordering columns in dataset and splitting into train and test
+set.seed(123)
+mtcar<-mtcars%>%select(2,1,3,4,5,6,7,8,9,10,11)
+mtcar$cyl<-as.factor(mtcar$cyl)
+sample<-sample.split(mtcar$cyl,SplitRatio=.75)
+mtcarTrain<-subset(mtcar,sample==TRUE)
+mtcarTest<-subset(mtcar,sample==FALSE)
+```
+
+
+```{r}
+#Running function naiveBayesA
+accuracyNBAMtcar<-naiveBayesA(mtcarTrain,mtcarTest)
+accuracyNBAMtcar
+```
+```{r}
+#Running function naiveBayesB
+accuracyNBBMtcar<-naiveBayesB(mtcarTrain,mtcarTest)
+accuracyNBBMtcar
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
